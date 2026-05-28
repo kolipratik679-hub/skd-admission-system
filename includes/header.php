@@ -3,6 +3,9 @@
 $current_dir = basename(dirname($_SERVER['SCRIPT_NAME']));
 $is_subfolder = $current_dir !== 'skd-admission' && $current_dir !== '';
 $base_path = $is_subfolder ? '../' : './';
+
+// Load centralized mockup configuration & session identity
+include_once __DIR__ . '/dummy-data.php';
 ?>
 <!DOCTYPE html>
 <html lang="en" class="h-full">

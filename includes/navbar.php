@@ -3,12 +3,14 @@ $current_dir = basename(dirname($_SERVER['SCRIPT_NAME']));
 $is_subfolder = $current_dir !== 'skd-admission' && $current_dir !== '';
 $base_path = $is_subfolder ? '../' : './';
 
-$branch_name = "Head Office";
-$branch_color = "#2563eb";
+// Use dynamic branding variables configured in dummy-data.php (included via header.php)
+$display_branch_name = isset($db_branch_name) ? $db_branch_name : 'Head Office';
+$display_branch_color = isset($db_branch_color) ? $db_branch_color : '#2563eb';
 
-if ($current_dir === 'branch') {
-    $branch_name = "Pune Camp";
-    $branch_color = "#0ea5e9";
+if ($current_dir === 'admin') {
+    // Admin has global head office context
+    $display_branch_name = 'Super Admin';
+    $display_branch_color = '#2563eb';
 }
 
 $is_student = ($current_dir === 'portal');
@@ -24,22 +26,22 @@ $is_student = ($current_dir === 'portal');
             <?php if (!$is_student): ?>
             <div class="hidden md:flex items-center gap-2 max-w-md flex-1 bg-muted rounded-md px-3 py-1.5">
                 <i data-lucide="search" class="w-[16px] h-[16px] text-muted-foreground"></i>
-                <input placeholder="Search students, branches, courses..." class="bg-transparent outline-none text-sm flex-1">
+                <input id="global-search-filter" placeholder="Quick filter page listings..." class="bg-transparent outline-none text-sm flex-1">
             </div>
             <?php endif; ?>
         </div>
         <div class="flex items-center gap-3">
             <?php if (!$is_student): ?>
-            <button class="btn btn-ghost btn-sm relative">
+            <button class="btn btn-ghost btn-sm relative" onclick="showNotificationToast('Simulated notification triggered.')">
                 <i data-lucide="bell" class="w-[18px] h-[18px]"></i>
                 <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-destructive"></span>
             </button>
             <div class="hidden sm:flex items-center gap-2 pl-3 border-l border-border">
-                <div class="h-9 w-9 rounded-md flex items-center justify-center text-white text-xs font-bold" style="background: <?php echo $branch_color; ?>;">
-                    <?php echo strtoupper(substr($branch_name, 0, 2)); ?>
+                <div class="h-9 w-9 rounded-md flex items-center justify-center text-white text-xs font-bold" style="background: <?php echo $display_branch_color; ?>;">
+                    <?php echo strtoupper(substr($display_branch_name, 0, 2)); ?>
                 </div>
                 <div class="leading-tight text-left">
-                    <div class="text-xs font-semibold"><?php echo $branch_name; ?></div>
+                    <div class="text-xs font-semibold"><?php echo $display_branch_name; ?></div>
                     <div class="text-[10px] text-muted-foreground">Branch Identity</div>
                 </div>
                 <i data-lucide="chevron-down" class="w-[14px] h-[14px] text-muted-foreground"></i>
@@ -56,3 +58,36 @@ $is_student = ($current_dir === 'portal');
         </div>
     </header>
     <main class="flex-1 p-4 lg:p-6 space-y-6 overflow-x-hidden">
+
+    <!-- REUSABLE SYSTEM NOTIFICATION / TOAST CONTAINER -->
+    <div id="global-toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- REUSABLE SYSTEM CONFIRMATION MODAL -->
+    <div id="global-confirm-modal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center hidden">
+        <div class="bg-card w-full max-w-sm rounded-lg border border-border shadow-lg p-5 space-y-4 m-4">
+            <div class="flex items-center gap-3">
+                <div class="h-10 w-10 rounded-full bg-destructive-soft text-destructive flex items-center justify-center shrink-0">
+                    <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h3 id="confirm-modal-title" class="font-semibold text-sm">Are you sure?</h3>
+                    <p id="confirm-modal-desc" class="text-xs text-muted-foreground mt-0.5">This action cannot be undone.</p>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 text-xs">
+                <button id="confirm-modal-cancel" class="btn btn-outline py-1.5 px-3">Cancel</button>
+                <button id="confirm-modal-action" class="btn btn-destructive py-1.5 px-3">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- REUSABLE LOADING LOADER -->
+    <div id="global-loading-screen" class="fixed inset-0 bg-black/20 z-50 flex items-center justify-center hidden">
+        <div class="bg-card py-3 px-5 border border-border rounded-md shadow-md flex items-center gap-3">
+            <svg class="animate-spin h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span id="loading-screen-text" class="text-sm font-medium">Processing request...</span>
+        </div>
+    </div>

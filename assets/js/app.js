@@ -1,9 +1,9 @@
 /**
- * S.K.D Admission System — Shared JS
+ * S.K.D Admission System — Shared Production JS
  * Pure vanilla JS. No frameworks or runtime dependencies.
  */
 
-// ─── Initialize Lucide Icons ─────────────────────────────────────────────────
+// ─── Initialize Lucide Icons & Event Handlers ────────────────────────────────
 document.addEventListener('DOMContentLoaded', function () {
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initPrintButtons();
     initUploadLabels();
     initActiveLinks();
+    initGlobalSearchFilter();
 });
 
 // ─── Mobile Sidebar Toggle ───────────────────────────────────────────────────
@@ -42,12 +43,12 @@ function initTabs() {
 
     tabButtons.forEach(function (btn) {
         btn.addEventListener('click', function () {
-            // Deactivate all tabs
-            tabButtons.forEach(function (b) {
+            // Deactivate all sibling buttons
+            btn.parentElement.querySelectorAll('[data-target]').forEach(function (b) {
                 b.classList.remove('border-primary', 'text-primary');
                 b.classList.add('border-transparent', 'text-muted-foreground');
             });
-            // Activate clicked tab
+            // Activate clicked button
             btn.classList.add('border-primary', 'text-primary');
             btn.classList.remove('border-transparent', 'text-muted-foreground');
 
@@ -76,7 +77,8 @@ function initPrintButtons() {
 // ─── Upload Label File Trigger ───────────────────────────────────────────────
 function initUploadLabels() {
     document.querySelectorAll('.upload-label').forEach(function (label) {
-        label.addEventListener('click', function () {
+        label.addEventListener('click', function (e) {
+            if (e.target.tagName === 'INPUT') return;
             var input = label.querySelector('input[type="file"]');
             if (input) input.click();
         });
@@ -85,8 +87,17 @@ function initUploadLabels() {
         if (input) {
             input.addEventListener('change', function () {
                 var filenameEl = label.querySelector('.upload-filename');
-                if (filenameEl && input.files.length) {
-                    filenameEl.textContent = input.files[0].name;
+                var statusText = label.querySelector('.upload-status');
+                if (input.files.length) {
+                    var file = input.files[0];
+                    if (filenameEl) {
+                        filenameEl.textContent = file.name + ' (' + Math.round(file.size / 1024) + ' KB)';
+                    }
+                    if (statusText) {
+                        statusText.textContent = "Ready to upload";
+                        statusText.classList.remove("text-muted-foreground");
+                        statusText.classList.add("text-success", "font-medium");
+                    }
                 }
             });
         }
@@ -107,18 +118,160 @@ function initActiveLinks() {
     });
 }
 
-// ─── Search Filter (client-side table filter) ────────────────────────────────
-function filterTable(inputId, tableId) {
-    var input  = document.getElementById(inputId);
-    var table  = document.getElementById(tableId);
-    if (!input || !table) return;
+// ─── Global Search / Page Quick Filter ──────────────────────────────────────
+function initGlobalSearchFilter() {
+    const input = document.getElementById('global-search-filter');
+    if (!input) return;
 
     input.addEventListener('keyup', function () {
         var filter = input.value.toLowerCase();
-        var rows   = table.querySelectorAll('tbody tr');
+        // Target whatever table exists on the active screen
+        var table = document.querySelector('.data-table');
+        if (!table) return;
+
+        var rows = table.querySelectorAll('tbody tr');
+        var matched = 0;
         rows.forEach(function (row) {
             var text = row.textContent.toLowerCase();
-            row.style.display = text.includes(filter) ? '' : 'none';
+            if (text.includes(filter)) {
+                row.style.display = '';
+                matched++;
+            } else {
+                row.style.display = 'none';
+            }
         });
+
+        // Toggle empty state if zero matches
+        const emptyState = document.getElementById('empty-state-row');
+        if (emptyState) {
+            emptyState.style.display = (matched === 0) ? '' : 'none';
+        }
+    });
+}
+
+// ─── SYSTEM TOAST NOTIFICATIONS ──────────────────────────────────────────────
+function showNotificationToast(message, type = 'success') {
+    const container = document.getElementById('global-toast-container');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = 'pointer-events-auto bg-card border border-border rounded-lg shadow-lg p-3.5 flex items-center gap-3 w-80 translate-y-2 opacity-0 transition-all duration-300';
+    
+    let colorClass = 'text-success';
+    let iconName = 'check-circle';
+    if (type === 'warning') {
+        colorClass = 'text-warning';
+        iconName = 'alert-triangle';
+    } else if (type === 'destructive') {
+        colorClass = 'text-destructive';
+        iconName = 'alert-octagon';
+    } else if (type === 'info') {
+        colorClass = 'text-primary';
+        iconName = 'info';
+    }
+
+    toast.innerHTML = `
+        <div class="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0 ${colorClass}">
+            <i data-lucide="${iconName}" class="w-4 h-4"></i>
+        </div>
+        <div class="flex-1 text-xs font-medium leading-tight">${message}</div>
+        <button class="text-muted-foreground hover:text-foreground shrink-0" onclick="this.parentElement.remove()">
+            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+        </button>
+    `;
+
+    container.appendChild(toast);
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons({ attrs: { class: 'w-4 h-4' } });
+    }
+
+    // Animate in
+    setTimeout(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+    }, 10);
+
+    // Auto-remove after 4 seconds
+    setTimeout(() => {
+        toast.classList.add('translate-y-2', 'opacity-0');
+        setTimeout(() => { toast.remove(); }, 300);
+    }, 4000);
+}
+
+// ─── SYSTEM LOADER SCREEN TRIGGER ────────────────────────────────────────────
+function showLoader(message = 'Processing request...', duration = 0) {
+    const screen = document.getElementById('global-loading-screen');
+    const text = document.getElementById('loading-screen-text');
+    if (!screen || !text) return;
+
+    text.textContent = message;
+    screen.classList.remove('hidden');
+
+    if (duration > 0) {
+        setTimeout(hideLoader, duration);
+    }
+}
+
+function hideLoader() {
+    const screen = document.getElementById('global-loading-screen');
+    if (screen) screen.classList.add('hidden');
+}
+
+// ─── SYSTEM CONFIRMATION DIALOG TRIGGER ──────────────────────────────────────
+function triggerConfirmDialog(title, description, onConfirm) {
+    const modal = document.getElementById('global-confirm-modal');
+    const titleEl = document.getElementById('confirm-modal-title');
+    const descEl = document.getElementById('confirm-modal-desc');
+    const cancelBtn = document.getElementById('confirm-modal-cancel');
+    const actionBtn = document.getElementById('confirm-modal-action');
+
+    if (!modal || !titleEl || !descEl || !cancelBtn || !actionBtn) return;
+
+    titleEl.textContent = title;
+    descEl.textContent = description;
+    modal.classList.remove('hidden');
+
+    // Clean listeners
+    const newCancel = cancelBtn.cloneNode(true);
+    const newAction = actionBtn.cloneNode(true);
+    cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+    actionBtn.parentNode.replaceChild(newAction, actionBtn);
+
+    newCancel.addEventListener('click', function () {
+        modal.classList.add('hidden');
+    });
+
+    newAction.addEventListener('click', function () {
+        modal.classList.add('hidden');
+        if (typeof onConfirm === 'function') onConfirm();
+    });
+}
+
+function triggerLogoutConfirm() {
+    const isSub = window.location.pathname.includes('/admin/') || window.location.pathname.includes('/branch/') || window.location.pathname.includes('/portal/');
+    const dest = isSub ? '../index.php' : 'index.php';
+    
+    triggerConfirmDialog(
+        "Confirm Logout",
+        "Are you sure you want to log out of the SKD Admission System?",
+        function () {
+            showLoader("Logging out...", 1000);
+            setTimeout(() => {
+                window.location.href = dest;
+            }, 1000);
+        }
+    );
+}
+
+// ─── DUMMY DATA STATE MANIPULATIONS (for client demonstration) ──────────────
+function handleSimulatedSave(formId, successMsg) {
+    const form = document.getElementById(formId);
+    if (!form) return;
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        showLoader("Saving changes...", 1200);
+        setTimeout(() => {
+            showNotificationToast(successMsg, 'success');
+        }, 1200);
     });
 }
