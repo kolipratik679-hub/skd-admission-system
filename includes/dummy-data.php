@@ -1,242 +1,236 @@
 <?php
 /**
- * S.K.D Admission System — Centralized Dummy Data & Branding Setup
- * This file serves as the single source of truth for mock data,
- * making future database integration extremely simple.
+ * SKD Admission System — Branding & Mock Data
+ *
+ * Priority: Session (real DB) → Mock fallback (development without DB)
+ * When a user is logged in (session set by config/auth.php), branding
+ * variables are loaded from $_SESSION. Otherwise mock data is used.
  */
 
-// ─── 1. SIMULATED BRANDS / BRANCHES ──────────────────────────────────────────
-$mock_branches = [
-    'Pune Camp' => [
-        'id' => 1,
-        'name' => 'Pune Camp',
-        'brand_name' => 'S.K.D Computer Education',
-        'logo' => 'assets/images/skd-logo.png',
-        'contact' => '+91 98220 11111',
-        'whatsapp' => '+91 98220 11111',
-        'email' => 'camp@skdedu.com',
-        'address' => '1st Floor, Camp, Near Victory Theatre, Pune, Maharashtra 411001',
-        'color' => '#2563eb', // Blue
-        'username' => 'camp_pune',
-        'password' => 'camp@123',
-        'status' => 'Active'
-    ],
-    'Mumbai Central' => [
-        'id' => 2,
-        'name' => 'Mumbai Central',
-        'brand_name' => 'S.K.D IT Institute',
-        'logo' => 'assets/images/skd-logo.png',
-        'contact' => '+91 98220 22222',
-        'whatsapp' => '+91 98220 22222',
-        'email' => 'mumbai@skdedu.com',
-        'address' => 'Sector 3, Opp Station, Mumbai Central, Mumbai 400008',
-        'color' => '#0ea5e9', // Sky Blue
-        'username' => 'mumbai_ctr',
-        'password' => 'mumbai@123',
-        'status' => 'Active'
-    ],
-    'Nashik Road' => [
-        'id' => 3,
-        'name' => 'Nashik Road',
-        'brand_name' => 'S.K.D Academy',
-        'logo' => 'assets/images/skd-logo.png',
-        'contact' => '+91 98220 33333',
-        'whatsapp' => '+91 98220 33333',
-        'email' => 'nashik@skdedu.com',
-        'address' => 'Nashik Road, Above HDFC Bank, Nashik, Maharashtra 422101',
-        'color' => '#6366f1', // Indigo
-        'username' => 'nashik_rd',
-        'password' => 'nashik@123',
-        'status' => 'Active'
-    ],
-    'Aurangabad' => [
-        'id' => 4,
-        'name' => 'Aurangabad',
-        'brand_name' => 'S.K.D Info Tech',
-        'logo' => 'assets/images/skd-logo.png',
-        'contact' => '+91 98220 44444',
-        'whatsapp' => '+91 98220 44444',
-        'email' => 'abad@skdedu.com',
-        'address' => 'Cidco, Near Bus Stand, Aurangabad 431003',
-        'color' => '#3b82f6', // Light Blue
-        'username' => 'abad_tech',
-        'password' => 'abad@123',
-        'status' => 'Active'
-    ],
-    'Nagpur' => [
-        'id' => 5,
-        'name' => 'Nagpur',
-        'brand_name' => 'S.K.D Training Center',
-        'logo' => 'assets/images/skd-logo.png',
-        'contact' => '+91 98220 55555',
-        'whatsapp' => '+91 98220 55555',
-        'email' => 'nagpur@skdedu.com',
-        'address' => 'Sadar, Residency Road, Nagpur 440001',
-        'color' => '#8b5cf6', // Violet
-        'username' => 'nagpur_trn',
-        'password' => 'nagpur@123',
-        'status' => 'Inactive'
-    ]
-];
+// ─── SESSION-BASED BRANDING (Production) ─────────────────────────────────────
+// These vars are injected here so all pages (header/sidebar/navbar/body)
+// can read them without re-querying the DB on every include.
 
-// ─── 2. SIMULATED ACTIVE SESSION IDENTITY ───────────────────────────────────
-// In actual backend integration, these will read from session storage (e.g. $_SESSION['branch'])
-$current_dir = basename(dirname($_SERVER['SCRIPT_NAME']));
+if (!empty($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
+    // ── Staff or Branch Session ──
+    $db_branch_name     = $_SESSION['branch_name']     ?? 'Head Office';
+    $db_brand_name      = $_SESSION['brand_name']      ?? 'S.K.D Computer Education';
+    $db_branch_logo     = $_SESSION['branch_logo']     ?? 'assets/images/skd-logo.png';
+    $db_branch_contact  = $_SESSION['branch_contact']  ?? '07073139662';
+    $db_branch_whatsapp = $_SESSION['branch_whatsapp'] ?? '07073139662';
+    $db_branch_email    = $_SESSION['branch_email']    ?? 'shivkadass.k.d@gmail.com';
+    $db_branch_address  = $_SESSION['branch_address']  ?? 'Nerul, Navi Mumbai';
+    $db_branch_color    = $_SESSION['branch_color']    ?? '#2563eb';
 
-if ($current_dir === 'branch') {
-    // Default logged in branch for branch user
-    $active_branch_key = 'Pune Camp';
+    // ── Current logged-in identity ──
+    $current_role       = $_SESSION['role']         ?? 'branch';
+    $current_username   = $_SESSION['username']     ?? '';
+    $current_branch_id  = $_SESSION['branch_id']    ?? null;
+
+    // ── Student Session extras ──
+    $current_student_id   = $_SESSION['student_id']   ?? null;
+    $current_student_name = $_SESSION['student_name'] ?? null;
+
 } else {
-    // Super admin default head office simulated identity
-    $active_branch_key = 'Pune Camp';
+    // ─── MOCK FALLBACK — Used when no session / during local preview ─────────
+    // Keeps pages renderable during development before DB is connected.
+
+    $db_branch_name     = 'Nerul Branch';
+    $db_brand_name      = 'S.K.D Computer Education';
+    $db_branch_logo     = 'assets/images/skd-logo.png';
+    $db_branch_contact  = '07073139662';
+    $db_branch_whatsapp = '07073139662';
+    $db_branch_email    = 'shivkadass.k.d@gmail.com';
+    $db_branch_address  = 'Nerul Station Complex, F-114, Nerul West, Navi Mumbai';
+    $db_branch_color    = '#2563eb';
+
+    $current_role       = 'super_admin';
+    $current_username   = 'admin';
+    $current_branch_id  = null;
+    $current_student_id   = null;
+    $current_student_name = null;
 }
 
-$active_branch = $mock_branches[$active_branch_key];
+// ─── MOCK DATA ARRAYS (kept for template pages / development preview) ─────────
+// These arrays are not queried in production — they exist only so that
+// existing frontend templates don't break before CRUD is implemented.
 
-// Dynamic Branding placeholders
-$db_branch_name    = $active_branch['name'];
-$db_brand_name     = $active_branch['brand_name'];
-$db_branch_logo    = $active_branch['logo'];
-$db_branch_contact = $active_branch['contact'];
-$db_branch_whatsapp= $active_branch['whatsapp'];
-$db_branch_email   = $active_branch['email'];
-$db_branch_address = $active_branch['address'];
-$db_branch_color   = $active_branch['color'];
-
-// ─── 3. SIMULATED STUDENTS DATABASE ──────────────────────────────────────────
-$mock_students = [
-    [
-        'id' => 'SKD-2025-0142',
-        'name' => 'Rahul Sharma',
-        'gender' => 'Male',
-        'dob' => '12 Aug 2003',
-        'father' => 'Suresh Sharma',
-        'mother' => 'Meera Sharma',
-        'mobile' => '+91 98765 43210',
-        'email' => 'rahul@email.com',
-        'branch' => 'Pune Camp',
-        'course' => 'DCA',
-        'duration' => '6 Months',
-        'admission_date' => '12 Jan 2025',
-        'photo' => 'assets/images/placeholder-avatar.png',
-        'fees_total' => 15000,
-        'fees_paid' => 15000,
-        'fees_discount' => 500,
-        'fees_balance' => 0,
-        'status' => 'Active'
+$mock_branches = [
+    'Nerul Branch' => [
+        'id'         => 2,
+        'name'       => 'Nerul Branch',
+        'brand_name' => 'S.K.D Computer Education',
+        'logo'       => 'assets/images/skd-logo.png',
+        'contact'    => '07073139662',
+        'whatsapp'   => '07073139662',
+        'email'      => 'shivkadass.k.d@gmail.com',
+        'address'    => 'Nerul Station Complex, F-114, Nerul West, Navi Mumbai, Maharashtra 400706',
+        'color'      => '#2563eb',
+        'username'   => 'skdnerul',
+        'status'     => 'Active',
     ],
-    [
-        'id' => 'SKD-2025-0141',
-        'name' => 'Priya Nair',
-        'gender' => 'Female',
-        'dob' => '22 Oct 2004',
-        'father' => 'K. Nair',
-        'mother' => 'Sunita Nair',
-        'mobile' => '+91 98765 43211',
-        'email' => 'priya@email.com',
-        'branch' => 'Pune Camp',
-        'course' => 'Tally Prime',
-        'duration' => '3 Months',
-        'admission_date' => '10 Jan 2025',
-        'photo' => 'assets/images/placeholder-avatar.png',
-        'fees_total' => 8000,
-        'fees_paid' => 4000,
-        'fees_discount' => 0,
-        'fees_balance' => 4000,
-        'status' => 'Active'
+    'NCA Chopanki' => [
+        'id'         => 3,
+        'name'       => 'NCA Chopanki',
+        'brand_name' => 'NCA COACHING CENTER',
+        'logo'       => 'assets/images/skd-logo.png',
+        'contact'    => '9876543211',
+        'whatsapp'   => '9876543211',
+        'email'      => 'ncacoaching@gmail.com',
+        'address'    => 'MUSTAK MARKET CHOPANKI ALWAR (RAJ.)',
+        'color'      => '#0891b2',
+        'username'   => 'nca',
+        'status'     => 'Active',
     ],
-    [
-        'id' => 'SKD-2025-0140',
-        'name' => 'Aman Verma',
-        'gender' => 'Male',
-        'dob' => '05 Jan 2002',
-        'father' => 'Ramesh Verma',
-        'mother' => 'Sharda Verma',
-        'mobile' => '+91 98765 43212',
-        'email' => 'aman@email.com',
-        'branch' => 'Mumbai Central',
-        'course' => 'Web Design',
-        'duration' => '6 Months',
-        'admission_date' => '08 Jan 2025',
-        'photo' => 'assets/images/placeholder-avatar.png',
-        'fees_total' => 18000,
-        'fees_paid' => 18000,
-        'fees_discount' => 1000,
-        'fees_balance' => 0,
-        'status' => 'Active'
+    'A1 Bhiwadi' => [
+        'id'         => 4,
+        'name'       => 'A1 Bhiwadi',
+        'brand_name' => 'A1 Computer Education',
+        'logo'       => 'assets/images/skd-logo.png',
+        'contact'    => '9876543212',
+        'whatsapp'   => '9876543212',
+        'email'      => 'a1computer@gmail.com',
+        'address'    => 'CENTER MARKET BHIWADI (RAJ.)',
+        'color'      => '#6366f1',
+        'username'   => 'a1computer',
+        'status'     => 'Active',
     ],
-    [
-        'id' => 'SKD-2025-0139',
-        'name' => 'Sneha Patil',
-        'gender' => 'Female',
-        'dob' => '15 Nov 2003',
-        'father' => 'Vijay Patil',
-        'mother' => 'Lata Patil',
-        'mobile' => '+91 98765 43213',
-        'email' => 'sneha@email.com',
-        'branch' => 'Nashik Road',
-        'course' => 'ADCA',
-        'duration' => '12 Months',
-        'admission_date' => '05 Jan 2025',
-        'photo' => 'assets/images/placeholder-avatar.png',
-        'fees_total' => 25000,
-        'fees_paid' => 10000,
-        'fees_discount' => 1500,
-        'fees_balance' => 13500,
-        'status' => 'Active'
-    ],
-    [
-        'id' => 'SKD-2025-0138',
-        'name' => 'Karan Mehta',
-        'gender' => 'Male',
-        'dob' => '30 Jul 2002',
-        'father' => 'Pradeep Mehta',
-        'mother' => 'Anjali Mehta',
-        'mobile' => '+91 98765 43214',
-        'email' => 'karan@email.com',
-        'branch' => 'Pune Camp',
-        'course' => 'CCC',
-        'duration' => '3 Months',
-        'admission_date' => '02 Jan 2025',
-        'photo' => 'assets/images/placeholder-avatar.png',
-        'fees_total' => 4500,
-        'fees_paid' => 4500,
-        'fees_discount' => 0,
-        'fees_balance' => 0,
-        'status' => 'Completed'
-    ]
 ];
 
-// ─── 4. SIMULATED CERTIFICATES DATABASE ──────────────────────────────────────
+$mock_students = [
+    [
+        'id'             => 'SKD2026-0001',
+        'name'           => 'Rahul Sharma',
+        'gender'         => 'Male',
+        'dob'            => '14 May 2002',
+        'father'         => 'Ramesh Sharma',
+        'mother'         => 'Sunita Sharma',
+        'mobile'         => '9876543210',
+        'email'          => 'rahul@example.com',
+        'branch'         => 'Nerul Branch',
+        'course'         => 'DCA',
+        'duration'       => '6 Months',
+        'admission_date' => '10 Jan 2026',
+        'photo'          => 'assets/images/placeholder-avatar.png',
+        'fees_total'     => 15000,
+        'fees_paid'      => 15000,
+        'fees_discount'  => 0,
+        'fees_balance'   => 0,
+        'status'         => 'Active',
+    ],
+    [
+        'id'             => 'SKD2026-0002',
+        'name'           => 'Priya Nair',
+        'gender'         => 'Female',
+        'dob'            => '22 Aug 2003',
+        'father'         => 'Suresh Nair',
+        'mother'         => 'Meena Nair',
+        'mobile'         => '9876543211',
+        'email'          => 'priya@example.com',
+        'branch'         => 'Nerul Branch',
+        'course'         => 'Tally Prime',
+        'duration'       => '3 Months',
+        'admission_date' => '15 Jan 2026',
+        'photo'          => 'assets/images/placeholder-avatar.png',
+        'fees_total'     => 8000,
+        'fees_paid'      => 4000,
+        'fees_discount'  => 0,
+        'fees_balance'   => 4000,
+        'status'         => 'Active',
+    ],
+    [
+        'id'             => 'SKD2026-0003',
+        'name'           => 'Aman Verma',
+        'gender'         => 'Male',
+        'dob'            => '05 Nov 2001',
+        'father'         => 'Rajesh Verma',
+        'mother'         => 'Kavita Verma',
+        'mobile'         => '9876543212',
+        'email'          => 'aman@example.com',
+        'branch'         => 'Nerul Branch',
+        'course'         => 'Web Design',
+        'duration'       => '6 Months',
+        'admission_date' => '01 Feb 2026',
+        'photo'          => 'assets/images/placeholder-avatar.png',
+        'fees_total'     => 18000,
+        'fees_paid'      => 18000,
+        'fees_discount'  => 0,
+        'fees_balance'   => 0,
+        'status'         => 'Active',
+    ],
+    [
+        'id'             => 'SKD2026-0004',
+        'name'           => 'Kiran Mehta',
+        'gender'         => 'Male',
+        'dob'            => '18 Mar 2004',
+        'father'         => 'Vijay Mehta',
+        'mother'         => 'Asha Mehta',
+        'mobile'         => '9876543213',
+        'email'          => 'kiran@example.com',
+        'branch'         => 'Nerul Branch',
+        'course'         => 'CCC',
+        'duration'       => '3 Months',
+        'admission_date' => '10 Feb 2026',
+        'photo'          => 'assets/images/placeholder-avatar.png',
+        'fees_total'     => 4500,
+        'fees_paid'      => 4500,
+        'fees_discount'  => 0,
+        'fees_balance'   => 0,
+        'status'         => 'Completed',
+    ],
+    [
+        'id'             => 'SKD2026-0005',
+        'name'           => 'Sneha Patil',
+        'gender'         => 'Female',
+        'dob'            => '30 Jul 2003',
+        'father'         => 'Ganesh Patil',
+        'mother'         => 'Rekha Patil',
+        'mobile'         => '9876543214',
+        'email'          => 'sneha@example.com',
+        'branch'         => 'NCA Chopanki',
+        'course'         => 'ADCA',
+        'duration'       => '12 Months',
+        'admission_date' => '20 Jan 2026',
+        'photo'          => 'assets/images/placeholder-avatar.png',
+        'fees_total'     => 25000,
+        'fees_paid'      => 17000,
+        'fees_discount'  => 500,
+        'fees_balance'   => 7500,
+        'status'         => 'Active',
+    ],
+];
+
 $mock_certificates = [
     [
-        'student_id' => 'SKD-2025-0142',
-        'student_name' => 'Rahul Sharma',
-        'course' => 'DCA',
+        'student_id'       => 'SKD2026-0001',
+        'student_name'     => 'Rahul Sharma',
+        'course'           => 'DCA',
         'certificate_name' => 'Rahul_Sharma_DCA_Completion.pdf',
-        'issue_date' => '20 May 2026',
-        'file_size' => '245 KB',
-        'uploaded_by' => 'Super Admin',
-        'file_type' => 'pdf'
+        'issue_date'       => '20 May 2026',
+        'file_size'        => '245 KB',
+        'uploaded_by'      => 'admin',
+        'file_type'        => 'pdf',
     ],
     [
-        'student_id' => 'SKD-2025-0141',
-        'student_name' => 'Priya Nair',
-        'course' => 'Tally Prime',
+        'student_id'       => 'SKD2026-0002',
+        'student_name'     => 'Priya Nair',
+        'course'           => 'Tally Prime',
         'certificate_name' => 'Priya_Nair_Tally_Bonafide.png',
-        'issue_date' => '19 May 2026',
-        'file_size' => '1.2 MB',
-        'uploaded_by' => 'Pune Camp',
-        'file_type' => 'png'
+        'issue_date'       => '19 May 2026',
+        'file_size'        => '1.2 MB',
+        'uploaded_by'      => 'skdnerul',
+        'file_type'        => 'png',
     ],
-    [
-        'student_id' => 'SKD-2025-0140',
-        'student_name' => 'Aman Verma',
-        'course' => 'Web Design',
-        'certificate_name' => 'Aman_Verma_Web_Design.jpg',
-        'issue_date' => '18 May 2026',
-        'file_size' => '840 KB',
-        'uploaded_by' => 'Mumbai Central',
-        'file_type' => 'jpg'
-    ]
+];
+
+// Active branch for template rendering (uses session data if available)
+$active_branch = [
+    'name'     => $db_branch_name,
+    'brand_name' => $db_brand_name,
+    'logo'     => $db_branch_logo,
+    'contact'  => $db_branch_contact,
+    'whatsapp' => $db_branch_whatsapp,
+    'email'    => $db_branch_email,
+    'address'  => $db_branch_address,
+    'color'    => $db_branch_color,
 ];

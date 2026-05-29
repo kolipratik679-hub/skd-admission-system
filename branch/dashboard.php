@@ -1,4 +1,7 @@
 <?php
+require_once '../config/auth.php';
+require_branch();
+
 $page_title = "Branch Dashboard";
 include '../includes/header.php';
 include '../includes/sidebar.php';

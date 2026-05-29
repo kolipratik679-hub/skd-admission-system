@@ -1,4 +1,7 @@
 <?php
+require_once '../config/auth.php';
+require_staff();
+
 $page_title = "Settings Configuration";
 include '../includes/header.php';
 include '../includes/sidebar.php';

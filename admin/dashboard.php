@@ -1,4 +1,7 @@
 <?php
+require_once '../config/auth.php';
+require_admin();
+
 $page_title = "Overview";
 include '../includes/header.php';
 include '../includes/sidebar.php';

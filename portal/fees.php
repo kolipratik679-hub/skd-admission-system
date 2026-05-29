@@ -1,4 +1,7 @@
 <?php
+require_once '../config/auth.php';
+require_student();
+
 $page_title = "My Fees Transactions";
 include '../includes/header.php';
 include '../includes/sidebar.php';

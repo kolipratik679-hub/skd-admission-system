@@ -3,17 +3,37 @@ $current_dir = basename(dirname($_SERVER['SCRIPT_NAME']));
 $is_subfolder = $current_dir !== 'skd-admission' && $current_dir !== '';
 $base_path = $is_subfolder ? '../' : './';
 
-// Use dynamic branding variables configured in dummy-data.php (included via header.php)
-$display_branch_name = isset($db_branch_name) ? $db_branch_name : 'Head Office';
+// Use dynamic branding variables from dummy-data.php (which reads from $_SESSION)
+$display_branch_name  = isset($db_branch_name)  ? $db_branch_name  : 'Head Office';
 $display_branch_color = isset($db_branch_color) ? $db_branch_color : '#2563eb';
 
-if ($current_dir === 'admin') {
-    // Admin has global head office context
-    $display_branch_name = 'Super Admin';
+// Session-aware role detection
+$_nav_role = $_SESSION['role'] ?? null;
+
+if ($current_dir === 'admin' || $_nav_role === 'super_admin') {
+    $display_branch_name  = 'Super Admin';
     $display_branch_color = '#2563eb';
 }
 
-$is_student = ($current_dir === 'portal');
+$is_student = ($current_dir === 'portal' || $_nav_role === 'student');
+
+// Real student identity from session
+$_nav_student_name = $_SESSION['student_name'] ?? 'Student';
+$_nav_student_id   = $_SESSION['student_id']   ?? '';
+$_nav_initials     = strtoupper(substr($_nav_student_name, 0, 1));
+// Get second word initial if exists
+$_nav_name_parts   = explode(' ', trim($_nav_student_name));
+if (count($_nav_name_parts) > 1) {
+    $_nav_initials .= strtoupper(substr($_nav_name_parts[1], 0, 1));
+}
+
+// Staff display
+$_nav_staff_label = 'Branch Identity';
+if ($_nav_role === 'super_admin') {
+    $_nav_staff_label = 'Super Admin';
+} elseif ($_nav_role === 'branch') {
+    $_nav_staff_label = $display_branch_name;
+}
 ?>
 <!-- Main Content Area Wrapper (starts here, ends in footer.php) -->
 <div class="flex-1 min-w-0 flex flex-col">
@@ -41,17 +61,17 @@ $is_student = ($current_dir === 'portal');
                     <?php echo strtoupper(substr($display_branch_name, 0, 2)); ?>
                 </div>
                 <div class="leading-tight text-left">
-                    <div class="text-xs font-semibold"><?php echo $display_branch_name; ?></div>
-                    <div class="text-[10px] text-muted-foreground">Branch Identity</div>
+                    <div class="text-xs font-semibold"><?php echo e($display_branch_name); ?></div>
+                    <div class="text-[10px] text-muted-foreground"><?php echo e($_nav_staff_label); ?></div>
                 </div>
                 <i data-lucide="chevron-down" class="w-[14px] h-[14px] text-muted-foreground"></i>
             </div>
             <?php else: ?>
             <div class="flex items-center gap-3 ml-auto">
-                <div class="h-9 w-9 rounded-full bg-primary-soft flex items-center justify-center text-primary font-semibold text-sm">RS</div>
+                <div class="h-9 w-9 rounded-full bg-primary-soft flex items-center justify-center text-primary font-semibold text-sm"><?php echo e($_nav_initials); ?></div>
                 <div class="hidden sm:block leading-tight text-left">
-                    <div class="text-xs font-semibold">Rahul Sharma</div>
-                    <div class="text-[10px] text-muted-foreground">SKD-2025-0142</div>
+                    <div class="text-xs font-semibold"><?php echo e($_nav_student_name); ?></div>
+                    <div class="text-[10px] text-muted-foreground"><?php echo e($_nav_student_id); ?></div>
                 </div>
             </div>
             <?php endif; ?>

@@ -32,11 +32,15 @@ if ($current_dir === 'admin') {
         ['to' => 'whatsapp-logs.php', 'label' => 'WhatsApp Logs', 'icon' => 'message-square'],
         ['to' => 'settings.php', 'label' => 'Settings', 'icon' => 'settings'],
     ];
-    $logout_url = '../login.php';
+    $logout_url = '../logout.php';
 } elseif ($current_dir === 'branch') {
     // ─── BRANCH USER SIDEBAR ───
-    $panel_title = $display_branch_name;
-    $panel_subtitle = "Branch Panel";
+    $panel_title    = $display_branch_name;
+    $panel_subtitle = 'Branch Panel';
+    // Show logged-in username if available
+    if (!empty($_SESSION['username'])) {
+        $panel_subtitle = e($_SESSION['username']);
+    }
     $nav_items = [
         ['to' => 'dashboard.php', 'label' => 'Dashboard', 'icon' => 'layout-dashboard'],
         ['to' => '../admin/new-admission.php', 'label' => 'New Admission', 'icon' => 'user-plus'],
@@ -46,7 +50,7 @@ if ($current_dir === 'admin') {
         ['to' => '../admin/id-cards.php', 'label' => 'ID Cards', 'icon' => 'id-card'],
         ['to' => '../admin/settings.php', 'label' => 'Settings', 'icon' => 'settings'],
     ];
-    $logout_url = '../login.php';
+    $logout_url = '../logout.php';
 } elseif ($current_dir === 'portal') {
     // ─── STUDENT PORTAL SIDEBAR ───
     $panel_title = "Student Portal";
@@ -57,7 +61,7 @@ if ($current_dir === 'admin') {
         ['to' => 'id-card.php', 'label' => 'ID Card', 'icon' => 'id-card'],
         ['to' => 'certificates.php', 'label' => 'Certificates', 'icon' => 'award'],
     ];
-    $logout_url = '../student-login.php';
+    $logout_url = '../logout.php';
 }
 ?>
 <div class="min-h-screen flex bg-background w-full">
@@ -105,7 +109,7 @@ if ($current_dir === 'admin') {
         <?php endforeach; ?>
     </nav>
     <div class="p-3 border-t border-sidebar-border">
-        <button onclick="triggerLogoutConfirm()" class="sidebar-link w-full text-left bg-transparent border-0 cursor-pointer">
+        <button onclick="triggerLogoutConfirm('<?php echo $logout_url; ?>')" class="sidebar-link w-full text-left bg-transparent border-0 cursor-pointer">
             <i data-lucide="log-out" class="w-[18px] h-[18px]"></i>
             <span>Logout</span>
         </button>

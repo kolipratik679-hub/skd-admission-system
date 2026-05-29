@@ -1,4 +1,7 @@
 <?php
+require_once '../config/auth.php';
+require_staff();
+
 $page_title = "Students Admissions Directory";
 include '../includes/header.php';
 include '../includes/sidebar.php';

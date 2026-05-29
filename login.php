@@ -1,5 +1,52 @@
 <?php
-$page_title = "Login";
+/**
+ * SKD Admission System — Staff / Admin Login
+ * Validates username + password against the branches table (PDO).
+ */
+
+define('ROOT_PATH', dirname(__FILE__));
+require_once ROOT_PATH . '/config/auth.php';
+
+// Redirect already-logged-in staff to their dashboard
+if (is_logged_in()) {
+    $role = session_role();
+    if ($role === 'super_admin') {
+        header('Location: admin/dashboard.php'); exit;
+    } elseif ($role === 'branch') {
+        header('Location: branch/dashboard.php'); exit;
+    }
+}
+
+$error   = '';
+$success = '';
+$prefill = '';
+
+// ─── POST Handler ─────────────────────────────────────────────────────────────
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $username = clean_input($_POST['username'] ?? '');
+    $password = $_POST['password'] ?? '';
+
+    if (empty($username) || empty($password)) {
+        $error = 'Please enter both username and password.';
+    } else {
+        $branch = auth_login_staff($username, $password);
+
+        if ($branch) {
+            set_staff_session($branch);
+            flash_set('success', 'Welcome back, ' . e($branch['name']) . '!');
+
+            // Route by role
+            if ($branch['role'] === 'super_admin') {
+                header('Location: admin/dashboard.php'); exit;
+            } else {
+                header('Location: branch/dashboard.php'); exit;
+            }
+        } else {
+            $error   = 'Invalid username or password. Please try again.';
+            $prefill = e($username);
+        }
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en" class="h-full">
@@ -19,6 +66,18 @@ $page_title = "Login";
             stroke-linejoin: round;
             fill: none;
         }
+        .error-box {
+            background: #fef2f2;
+            border: 1px solid #fca5a5;
+            color: #dc2626;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
     </style>
 </head>
 <body class="bg-background text-foreground antialiased font-sans min-h-screen">
@@ -36,20 +95,43 @@ $page_title = "Login";
             </div>
             <h1 class="text-2xl font-semibold mb-1">Welcome back</h1>
             <p class="text-sm text-muted-foreground mb-7">Sign in to access your admin or branch dashboard.</p>
-            
-            <form class="space-y-4" action="admin/dashboard.php" method="POST">
+
+            <?php if ($error): ?>
+            <div class="error-box">
+                <i data-lucide="alert-circle" style="width:16px;height:16px;flex-shrink:0;"></i>
+                <?= $error ?>
+            </div>
+            <?php endif; ?>
+
+            <form class="space-y-4" action="login.php" method="POST" id="login-form">
                 <div>
-                    <label class="form-label">Username</label>
+                    <label class="form-label" for="username">Username</label>
                     <div class="relative">
                         <i data-lucide="user" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4"></i>
-                        <input name="username" class="form-input pl-9" placeholder="admin@skd.com" value="" required />
+                        <input
+                            id="username"
+                            name="username"
+                            class="form-input pl-9"
+                            placeholder="Enter your username"
+                            value="<?= $prefill ?>"
+                            required
+                            autocomplete="username"
+                        />
                     </div>
                 </div>
                 <div>
-                    <label class="form-label">Password</label>
+                    <label class="form-label" for="password">Password</label>
                     <div class="relative">
                         <i data-lucide="lock" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4"></i>
-                        <input name="password" type="password" class="form-input pl-9" placeholder="••••••••" required />
+                        <input
+                            id="password"
+                            name="password"
+                            type="password"
+                            class="form-input pl-9"
+                            placeholder="••••••••"
+                            required
+                            autocomplete="current-password"
+                        />
                     </div>
                 </div>
                 <div class="flex items-center justify-between text-sm">
@@ -58,14 +140,14 @@ $page_title = "Login";
                     </label>
                     <a href="#" class="text-primary font-medium">Forgot password?</a>
                 </div>
-                <button type="submit" class="btn btn-primary w-full">Sign in</button>
+                <button type="submit" id="submit-btn" class="btn btn-primary w-full">Sign in</button>
                 <div class="text-center text-sm text-muted-foreground pt-2">
                     Are you a student? <a href="student-login.php" class="text-primary font-medium">Student login</a>
                 </div>
             </form>
         </div>
     </div>
-    
+
     <!-- Right Column: Hero Banner -->
     <div class="hidden lg:flex relative overflow-hidden items-center justify-center p-12" style="background: var(--gradient-hero)">
         <div class="absolute inset-0 opacity-20" style="
@@ -77,7 +159,7 @@ $page_title = "Login";
                 Administrative Console
             </div>
             <h2 class="text-3xl font-bold leading-tight mb-4">
-                Manage branches, admissions & fees from one place.
+                Manage branches, admissions &amp; fees from one place.
             </h2>
             <p class="text-white/80 text-sm mb-8 leading-relaxed">
                 A lightweight, modern admission management system built for multi-branch institutes.
@@ -85,16 +167,16 @@ $page_title = "Login";
             </p>
             <div class="grid grid-cols-3 gap-4">
                 <div class="rounded-lg bg-white/10 backdrop-blur p-4 border border-white/15">
-                    <div class="text-2xl font-bold">24</div>
+                    <div class="text-2xl font-bold">3</div>
                     <div class="text-[11px] text-white/75 mt-1">Branches</div>
                 </div>
                 <div class="rounded-lg bg-white/10 backdrop-blur p-4 border border-white/15">
-                    <div class="text-2xl font-bold">6.2K</div>
+                    <div class="text-2xl font-bold">10+</div>
                     <div class="text-[11px] text-white/75 mt-1">Students</div>
                 </div>
                 <div class="rounded-lg bg-white/10 backdrop-blur p-4 border border-white/15">
-                    <div class="text-2xl font-bold">4.1K</div>
-                    <div class="text-[11px] text-white/75 mt-1">Certificates</div>
+                    <div class="text-2xl font-bold">100%</div>
+                    <div class="text-[11px] text-white/75 mt-1">Secure</div>
                 </div>
             </div>
         </div>
@@ -102,6 +184,14 @@ $page_title = "Login";
 </div>
 
 <script src="https://unpkg.com/lucide@latest"></script>
-<script src="assets/js/app.js"></script>
+<script>
+    lucide.createIcons();
+    // Show loading state on submit
+    document.getElementById('login-form').addEventListener('submit', function() {
+        var btn = document.getElementById('submit-btn');
+        btn.textContent = 'Signing in…';
+        btn.disabled = true;
+    });
+</script>
 </body>
 </html>

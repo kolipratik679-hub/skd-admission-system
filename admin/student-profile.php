@@ -1,4 +1,7 @@
 <?php
+require_once '../config/auth.php';
+require_staff();
+
 $student_id = isset($_GET['id']) ? htmlspecialchars($_GET['id']) : 'SKD-2025-0142';
 $page_title = "Student Profile";
 include '../includes/header.php';

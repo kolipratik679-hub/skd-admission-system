@@ -246,18 +246,18 @@ function triggerConfirmDialog(title, description, onConfirm) {
     });
 }
 
-function triggerLogoutConfirm() {
-    const isSub = window.location.pathname.includes('/admin/') || window.location.pathname.includes('/branch/') || window.location.pathname.includes('/portal/');
-    const dest = isSub ? '../index.php' : 'index.php';
-    
+function triggerLogoutConfirm(logoutUrl) {
+    // Use the passed URL, or fall back to a sensible default
+    var dest = logoutUrl || '../logout.php';
+
     triggerConfirmDialog(
         "Confirm Logout",
         "Are you sure you want to log out of the SKD Admission System?",
         function () {
-            showLoader("Logging out...", 1000);
-            setTimeout(() => {
+            showLoader("Logging out...", 800);
+            setTimeout(function() {
                 window.location.href = dest;
-            }, 1000);
+            }, 800);
         }
     );
 }
